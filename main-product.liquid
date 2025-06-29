@@ -74,11 +74,15 @@
     >
   {%- endif -%}
 
-  {% assign variant_images = product.images | where: 'attached_to_variant?', true | map: 'src' %}
+  {% assign variant_images = product.variants | map: 'featured_media' | compact | map: 'id' %}
   <div class="page-width">
     <div class="product product--{{ section.settings.media_size }} product--{{ section.settings.media_position }} product--{{ section.settings.gallery_layout }} product--mobile-{{ section.settings.mobile_thumbnails }} grid grid--1-col {% if product.media.size > 0 %}grid--2-col-tablet{% else %}product--no-media{% endif %}">
       <div class="grid__item product__media-wrapper">
-        {% render 'product-media-gallery', variant_images: variant_images %}
+        {% render 'product-media-gallery', product: product %}
+
+
+
+
       </div>
       <div class="product__info-wrapper grid__item{% if settings.page_width > 1400 and section.settings.media_size == "small" %} product__info-wrapper--extra-padding{% endif %}{% if settings.animations_reveal_on_scroll %} scroll-trigger animate--slide-in{% endif %}">
         <section
@@ -2366,3 +2370,27 @@ document.addEventListener("DOMContentLoaded", function () {
 </script>
 
 {% endif %}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const variantForm = document.querySelector('form[action*="/cart/add"]');
+    const variantSelect = variantForm?.querySelector('select[name="id"]');
+
+    if (variantSelect) {
+      variantSelect.addEventListener('change', () => {
+        setTimeout(() => {
+          const variantId = variantSelect.value;
+          const variant = window.Shopify?.product?.variants?.find(v => String(v.id) === variantId);
+
+          if (variant) {
+            const changeEvent = new CustomEvent('variant:change', {
+              detail: { variant },
+              bubbles: true,
+            });
+            document.dispatchEvent(changeEvent);
+          }
+        }, 50); // delay ensures correct variant is picked
+      });
+    }
+  });
+</script>
+
