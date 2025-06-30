@@ -10,6 +10,7 @@
   {% if section.settings.image_zoom == 'hover' %}
     data-zoom-on-hover
   {% endif %}
+  
 >
   {{ 'section-main-product.css' | asset_url | stylesheet_tag }}
   {{ 'component-accordion.css' | asset_url | stylesheet_tag }}
@@ -729,6 +730,52 @@
     </script>
   </div>
 </product-info>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const form = document.querySelector('form[action*="/cart/add"]');
+  const hiddenInput = form?.querySelector('input[name="id"]');
+  const variantData = {{ product.variants | json }};
+  const optionNames = {{ product.options | json }};
+
+  if (!form || !hiddenInput || !variantData.length) return;
+
+  const updateVariantId = () => {
+    const selectedOptions = [];
+
+    optionNames.forEach((name, index) => {
+      const selected = form.querySelector(`input[name^="${name}-"]:checked`);
+      if (selected) {
+        selectedOptions[index] = selected.value;
+      }
+    });
+
+    const matchedVariant = variantData.find(variant =>
+      variant.options.every((val, i) => val === selectedOptions[i])
+    );
+
+    if (matchedVariant) {
+      hiddenInput.value = matchedVariant.id;
+
+      // Optional: enable Add to cart button
+      const addBtn = form.querySelector('[type="submit"]');
+      if (addBtn) {
+        addBtn.disabled = !matchedVariant.available;
+      }
+    }
+  };
+
+  // Watch all radio inputs for change
+  form.querySelectorAll('input[type="radio"]').forEach(input => {
+    input.addEventListener('change', updateVariantId);
+  });
+});
+</script>
+
+
+
+
+
 
 {% schema %}
 {
@@ -2393,3 +2440,4 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 </script>
+
